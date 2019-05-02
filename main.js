@@ -76,8 +76,12 @@ app.on('activate', () => {
 function createAddWindow() {
     addWindow = new BrowserWindow({
         width: 300,
-        height: 200,
+        height: 150,
         title: 'Add Project',
+        parent: win,
+        modal: true,
+        center: true,
+        resizable: false,
         webPreferences: {
             nodeIntegration: true
         }
@@ -98,12 +102,10 @@ function createAddWindow() {
 
 // Catch project:add
 ipcMain.on('project:add', function(e, token) {
-    win.webContents.send('project:add', token);
     addWindow.close();
 
     tokens = store.get("tokens") || []
     tokens = [...tokens, token]
-    console.log(tokens)
     store.set("tokens", tokens)
     tokens = null
 });
@@ -119,7 +121,7 @@ const mainMenuTemplate = [
         label: 'File',
         submenu: [{
                 label: 'Add Project',
-                accelerator: process.platform == 'darwin' ? 'Command+T' : 'Ctrl+Q',
+                //accelerator: process.platform == 'darwin' ? 'Command+T' : 'Ctrl+T',
                 click() {
                     createAddWindow();
                 }
@@ -138,9 +140,32 @@ const mainMenuTemplate = [
                 }
             }
         ]
+    },
+    {
+        label: "Edit",
+        submenu: [
+            { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+            { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+            { type: "separator" },
+            { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
+            { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
+            { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
+            { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+        ]
     }
 ];
 
+
+if (process.platform == 'darwin') {
+    mainMenuTemplate.unshift({
+        label: "Blynk-Desktop",
+        submenu: [
+            { label: "About Application", selector: "orderFrontStandardAboutPanel:" },
+            { type: "separator" },
+            { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); } }
+        ]
+    });
+}
 
 // Add developer tools option if in dev
 if (process.env.NODE_ENV !== 'production') {

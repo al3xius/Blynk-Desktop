@@ -4,8 +4,10 @@
     "description": "A blynk desktop client",
     "main": "main.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "electron ."
+        "start": "electron .",
+        "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
+        "package-win": "electron-packager . --overwrite --asar=true --platform=win32 --arch=ia32 --icon=assets/icons/win/icon.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Shopping List\"",
+        "package-linux": "electron-packager . --overwrite --platform=linux --arch=x64 --icon=assets/icons/png/icon.png --prune=true --out=release-builds"
     },
     "repository": {
         "type": "git",
@@ -24,6 +26,7 @@
         "electron": "^5.0.0"
     },
     "dependencies": {
+        "electron-packager": "^13.1.1",
         "electron-store": "^3.2.0",
         "require": "^2.4.20"
     }

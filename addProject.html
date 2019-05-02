@@ -11,22 +11,32 @@
         <label>Enter Token</label>
         <input type="text" id="token" autofocus>
       </div>
-      <button class="waves-effect waves-light btn" type="submit">Add Project</button>
+      <button class="waves-effect waves-light btn" id="submit" type="submit">Add Project</button>
+      <button class="waves-effect waves-light btn" id="close" type="submit">Close</button>
     </form>
   </div>
 
   <script>
     const electron = require('electron')
-    const {ipcRenderer} = electron
+    const {ipcRenderer, remote} = electron
 
-    document.querySelector('form').addEventListener('submit', submitForm)
+    document.querySelector("#submit").addEventListener('click', submitForm)
+    document.querySelector("#close").addEventListener('click', function(e){
+      var window = remote.getCurrentWindow()
+      window.close()
+    })
 
     function submitForm(e){
       e.preventDefault()
       const token = document.querySelector('#token').value
-      console.log(ipcRenderer)
-      console.debug("submitt")
-      ipcRenderer.send('project:add', token)
+      var tokenStr = new String(token)
+      var len = tokenStr.lenght
+      if (tokenStr.length == 32){
+        console.log(ipcRenderer)
+        ipcRenderer.send('project:add', token)
+      }else{
+        var err = alert("Enter valid Token! Make sure it is 32 characters long.")
+      }
     }
   </script>
 </body>
