@@ -19,5 +19,8 @@
     "bugs": {
         "url": "https://github.com/al3xius/Blynk-Desktop/issues"
     },
-    "homepage": "https://github.com/al3xius/Blynk-Desktop#readme"
+    "homepage": "https://github.com/al3xius/Blynk-Desktop#readme",
+    "devDependencies": {
+        "electron": "^5.0.0"
+    }
 }
