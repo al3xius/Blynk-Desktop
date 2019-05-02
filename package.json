@@ -22,5 +22,9 @@
     "homepage": "https://github.com/al3xius/Blynk-Desktop#readme",
     "devDependencies": {
         "electron": "^5.0.0"
+    },
+    "dependencies": {
+        "electron-store": "^3.2.0",
+        "require": "^2.4.20"
     }
 }
