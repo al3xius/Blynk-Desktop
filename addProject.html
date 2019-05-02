@@ -1,43 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <title>Add Project</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <title>Add Project</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
 </head>
+
 <body>
-  <div class="container">
-    <form>
-      <div>
-        <label>Enter Token</label>
-        <input type="text" id="token" autofocus>
-      </div>
-      <button class="waves-effect waves-light btn" id="submit" type="submit">Add Project</button>
-      <button class="waves-effect waves-light btn" id="close" type="submit">Close</button>
-    </form>
-  </div>
+    <div class="container">
+        <form>
+            <div>
+                <label>Enter Token</label>
+                <input type="text" id="token" autofocus>
+                <label>Server URL</label>
+                <input type="url" id="url" defalutValue="blynk-cloud.com" placeholder="blynk-cloud.com">
+                <label>Port</label>
+                <input type="text" id="port" defaultValue="9443" placeholder="9443">
+            </div>
+            <button class="waves-effect waves-light btn" id="submit" type="submit">Add Project</button>
+            <button class="waves-effect waves-light btn" id="close" type="submit">Close</button>
+        </form>
+    </div>
 
-  <script>
-    const electron = require('electron')
-    const {ipcRenderer, remote} = electron
+    <script>
+        //TODO: sanetize user inputs
+        const electron = require('electron')
+        const {
+            ipcRenderer,
+            remote
+        } = electron
+        //const normalizeUrl = require("normalize-url")
 
-    document.querySelector("#submit").addEventListener('click', submitForm)
-    document.querySelector("#close").addEventListener('click', function(e){
-      var window = remote.getCurrentWindow()
-      window.close()
-    })
+        document.querySelector("#submit").addEventListener('click', submitForm)
+        document.querySelector("#close").addEventListener('click', function(e) {
+            var window = remote.getCurrentWindow()
+            window.close()
+        })
 
-    function submitForm(e){
-      e.preventDefault()
-      const token = document.querySelector('#token').value
-      var tokenStr = new String(token)
-      var len = tokenStr.lenght
-      if (tokenStr.length == 32){
-        console.log(ipcRenderer)
-        ipcRenderer.send('project:add', token)
-      }else{
-        var err = alert("Enter valid Token! Make sure it is 32 characters long.")
-      }
-    }
-  </script>
+        function submitForm(e) {
+            e.preventDefault()
+
+            const token = document.querySelector('#token').value
+            const url = document.querySelector('#url').value
+            const port = document.querySelector('#port').value
+            var tokenStr = new String(token)
+
+            const access = {
+                token: token,
+                url: url,
+                port: port
+            }
+
+            //check token
+            if (tokenStr.length == 32) {
+                console.log(ipcRenderer)
+                ipcRenderer.send('project:add', JSON.stringify(access))
+            } else {
+                var err = alert("Enter valid Token! Make sure it is 32 characters long.")
+            }
+        }
+    </script>
 </body>
+
 </html>

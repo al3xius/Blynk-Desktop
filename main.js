@@ -2,6 +2,8 @@ const { app, BrowserWindow, Menu, ipcMain } = require('electron')
 const Store = require("electron-store")
 const path = require('path')
 const url = require('url')
+const https = require("https")
+
 
 // SET ENV
 process.env.NODE_ENV = 'development';
@@ -22,6 +24,8 @@ function createWindow() {
             nodeIntegration: true
         }
     })
+
+    updateProjects()
 
     // and load the index.html of the app.
     win.loadURL(url.format({
@@ -75,8 +79,8 @@ app.on('activate', () => {
 
 function createAddWindow() {
     addWindow = new BrowserWindow({
-        width: 300,
-        height: 150,
+        width: 400,
+        height: 400,
         title: 'Add Project',
         parent: win,
         modal: true,
@@ -95,21 +99,48 @@ function createAddWindow() {
     // Handle garbage collection
     addWindow.on('close', function() {
         addWindow = null;
-    });
+    })
 }
 
 
 
 // Catch project:add
-ipcMain.on('project:add', function(e, token) {
+ipcMain.on('project:add', function(e, access) {
     addWindow.close();
+    accesses = store.get("accesses") || []
+    accesses = [...accesses, access]
+    store.set("accesses", accesses)
+    accesses = null
+    updateProjects()
+})
 
-    tokens = store.get("tokens") || []
-    tokens = [...tokens, token]
-    store.set("tokens", tokens)
-    tokens = null
-});
 
+function updateProjects() {
+    accesses = store.get("accesses")
+    projects = []
+    store.set("projects", projects)
+
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
+
+    for (let index = 0; index < accesses.length; index++) {
+        const access = JSON.parse(accesses[index])
+        https.get("https://" + access.url + ":" + access.port + "/" + access.token + "/project", (resp) => {
+            let data = ""
+
+            resp.on("data", (chunk) => {
+                data += chunk
+            })
+            resp.on("end", () => {
+                projects = store.get("projects") || []
+                projects = [...projects, data]
+                store.set("projects", projects)
+            })
+        }).on("error", (err) => {
+            console.log("Error: " + err.message)
+        })
+    }
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 1;
+}
 
 
 
