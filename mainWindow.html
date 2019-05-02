@@ -3,45 +3,158 @@
 
 <head>
     <title>BLYNK-Desktop Client</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 
 <body>
     <nav>
         <div class="nav-wrapper">
-            <a class="brand-logo center">Blynk</a>
+            <a id="project-name" class="brand-logo center">Select Project</a>
         </div>
     </nav>
-    <ul></ul>
 
+    <ul id="slide-out" class="sidenav">
+    </ul>
+    <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
 
+    <!--JavaScript at end of body for optimized loading-->
     <script>
-        const electron = require('electron');
-        const {
-            ipcRenderer
-        } = electron;
-        const ul = document.querySelector('ul');
-        ipcRenderer.on('item:add', function(e, item) {
-            ul.className = 'collection';
-            const li = document.createElement('li');
-            li.className = 'collection-item';
-            const itemText = document.createTextNode(item);
-            li.appendChild(itemText);
-            ul.appendChild(li);
+        //Project Nav Bar
+        document.addEventListener('DOMContentLoaded', function() {
+            var elems = document.querySelectorAll('.sidenav');
+            var instances = M.Sidenav.init(elems);
+            var collapsibleElem = document.querySelector('.collapsible');
+            var collapsibleInstance = M.Collapsible.init(collapsibleElem);
         });
-        ipcRenderer.on('item:clear', function() {
-            ul.className = '';
-            ul.innerHTML = '';
-        });
-        ul.addEventListener('dblclick', removeItem);
 
-        function removeItem(e) {
-            event.target.remove();
-            if (ul.children.length == 0) {
-                ul.className = '';
+
+
+        const Store = require("electron-store")
+        const store = new Store();
+
+        update()
+
+        function update() {
+            updateSideBar()
+        }
+
+        window.addEventListener('hashchange', function() {
+            update()
+        })
+
+        function updateSideBar() {
+            //fill sidebar
+            const table = document.querySelector('ul')
+            const projects = store.get("projects") || [] //load projects
+
+            table.innerHTML = "";
+
+            //add header
+            li = document.createElement("li")
+            content = document.createElement("a")
+            content.innerHTML = "Projects"
+            content.className = "subheader"
+            li.appendChild(content)
+            table.appendChild(li)
+
+            for (let index = 0; index < projects.length; index++) {
+                project = projects[index]
+                project = JSON.parse(project)
+                const li = document.createElement("li")
+                const projectLink = document.createElement("a")
+                projectLink.href = "#" + index
+                    //projectLink.onclick = update
+                projectLink.innerHTML = project.name
+                projectLink.id = index
+
+                li.appendChild(projectLink)
+                table.appendChild(li)
+            }
+
+
+            //add Divider
+            li = document.createElement("li")
+            content = document.createElement("div")
+            content.className = "divider"
+            li.appendChild(content)
+            table.appendChild(li)
+
+            li = document.createElement("li")
+            content = document.createElement("a")
+            content.innerHTML = "Devices"
+            content.className = "subheader"
+            li.appendChild(content)
+            table.appendChild(li)
+
+            //add Devices of selected Project
+            //todo fix dropdown only on first
+
+            var selectedProjectID = getAnchor()
+            project = JSON.parse(projects[selectedProjectID])
+            document.getElementById("project-name").innerHTML = project.name
+
+            for (let index = 0; index < project.devices.length; index++) {
+                const device = project.devices[index]
+
+                const li = document.createElement("li")
+
+                const ul = document.createElement("ul")
+                ul.className = "collapsible collapsible-accordion"
+
+                const li2 = document.createElement("li")
+
+                const deviceLink = document.createElement("a")
+                deviceLink.innerHTML = device.name
+                deviceLink.className = "collapsible-header"
+
+                const icon = document.createElement("i")
+                icon.className = "material-icons right"
+                icon.innerHTML = "arrow_drop_down"
+                deviceLink.appendChild(icon)
+
+                li2.appendChild(deviceLink)
+
+                const div = document.createElement("div")
+                div.className = "collapsible-body"
+
+                const dropdownUl = document.createElement("ul")
+
+                const row = document.createElement("li")
+                const param = document.createElement("a")
+                param.innerHTML = device.boardType
+                row.appendChild(param)
+                dropdownUl.appendChild(row)
+
+                const row2 = document.createElement("li")
+                const param2 = document.createElement("a")
+                param2.innerHTML = "Online" //TODO: check status
+                row2.appendChild(param2)
+                dropdownUl.appendChild(row2)
+
+
+                div.appendChild(dropdownUl)
+                li2.appendChild(div)
+                ul.appendChild(li2)
+                li.appendChild(ul)
+                table.appendChild(li)
             }
         }
+
+
+        function getAnchor() {
+            var currentUrl = document.URL,
+                urlParts = currentUrl.split('#')
+
+            return (urlParts.length > 1) ? urlParts[1] : 0
+        }
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 
 </html>
