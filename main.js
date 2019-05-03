@@ -11,7 +11,8 @@ process.env.NODE_ENV = 'development';
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
-let addWindow
+let addProjectWindow
+let addDeviceTokenWindow
 const store = new Store();
 
 function createWindow() {
@@ -77,8 +78,8 @@ app.on('activate', () => {
 // code. You can also put them in separate files and require them here.
 
 
-function createAddWindow() {
-    addWindow = new BrowserWindow({
+function createAddProjectWindow() {
+    addProjectWindow = new BrowserWindow({
         width: 400,
         height: 400,
         title: 'Add Project',
@@ -90,28 +91,63 @@ function createAddWindow() {
             nodeIntegration: true
         }
     });
-    addWindow.loadURL(url.format({
+    addProjectWindow.loadURL(url.format({
         pathname: path.join(__dirname, 'addProject.html'),
         protocol: 'file:',
         slashes: true
     }))
 
     // Handle garbage collection
-    addWindow.on('close', function() {
-        addWindow = null;
+    addProjectWindow.on('close', function() {
+        addProjectWindow = null;
     })
 }
 
+function createAddDeviceTokenWindow(id) {
+    addDeviceTokenWindow = new BrowserWindow({
+        width: 400,
+        height: 250,
+        title: 'Add Device Token',
+        parent: win,
+        modal: true,
+        center: true,
+        resizable: false,
+        webPreferences: {
+            nodeIntegration: true
+        }
+    });
+    addDeviceTokenWindow.loadURL(url.format({
+        pathname: path.join(__dirname, 'addDeviceToken.html'),
+        protocol: 'file:',
+        slashes: true
+    }))
 
+    // Handle garbage collection
+    addDeviceTokenWindow.on('close', function() {
+        addProjectWindow = null;
+    })
+}
+
+global.createAddDeviceTokenWindow = createAddDeviceTokenWindow
 
 // Catch project:add
 ipcMain.on('project:add', function(e, access) {
-    addWindow.close();
+    addProjectWindow.close();
     accesses = store.get("accesses") || []
     accesses = [...accesses, access]
     store.set("accesses", accesses)
     accesses = null
     updateProjects()
+})
+
+// Catch device:addToken
+ipcMain.on('device:addToken', function(e, token) {
+    addDeviceTokenWindow.close();
+    /*accesses = store.get("accesses") || []
+    accesses = [...accesses, access]
+    store.set("accesses", accesses)
+    accesses = null
+    updateProjects()*/
 })
 
 
@@ -154,7 +190,14 @@ const mainMenuTemplate = [
                 label: 'Add Project',
                 //accelerator: process.platform == 'darwin' ? 'Command+T' : 'Ctrl+T',
                 click() {
-                    createAddWindow();
+                    createAddProjectWindow();
+                }
+            },
+            {
+                label: 'Add Token',
+                //accelerator: process.platform == 'darwin' ? 'Command+T' : 'Ctrl+T',
+                click() {
+                    createAddDeviceTokenWindow();
                 }
             },
             {
@@ -215,3 +258,5 @@ if (process.env.NODE_ENV !== 'production') {
         ]
     })
 }
+
+module.exports = createAddDeviceTokenWindow

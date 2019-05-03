@@ -15,35 +15,59 @@
 <body>
     <nav>
         <div class="nav-wrapper">
+            <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons center">menu</i></a>
             <a id="project-name" class="brand-logo center">Select Project</a>
         </div>
     </nav>
 
     <ul id="slide-out" class="sidenav">
     </ul>
-    <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+
+
+    <div class="row" id="widgets"></div>
 
     <!--JavaScript at end of body for optimized loading-->
     <script>
+        /* TODO: on Project change dropdown
+         * 
+         */
+
+
         //Project Nav Bar
+        const {
+            remote
+        } = require('electron')
+
         document.addEventListener('DOMContentLoaded', function() {
+            updateMaterialize()
+        });
+
+        function updateMaterialize() {
             var elems = document.querySelectorAll('.sidenav');
             var instances = M.Sidenav.init(elems);
-            var collapsibleElem = document.querySelector('.collapsible');
-            var collapsibleInstance = M.Collapsible.init(collapsibleElem);
-        });
+            var collapsibleElements = document.querySelectorAll('.collapsible');
+            var collapsibleInstances = M.Collapsible.init(collapsibleElements);
+            var tabs = document.querySelectorAll('.tabs');
+            var tabInstance = M.Tabs.init(tabs)
+        }
 
 
 
         const Store = require("electron-store")
+        const https = require("https")
         const store = new Store();
+
+        var projects = store.get("projects") || [] //load projects
+        var accesses = store.get("accesses") || []
 
         update()
 
         function update() {
             updateSideBar()
+            updateWidgets()
         }
 
+        //UPDATE if url has changed
         window.addEventListener('hashchange', function() {
             update()
         })
@@ -51,7 +75,8 @@
         function updateSideBar() {
             //fill sidebar
             const table = document.querySelector('ul')
-            const projects = store.get("projects") || [] //load projects
+            projects = store.get("projects") || [] //load projects
+            accesses = store.get("accesses") || []
 
             table.innerHTML = "";
 
@@ -60,6 +85,10 @@
             content = document.createElement("a")
             content.innerHTML = "Projects"
             content.className = "subheader"
+            icon = document.createElement("i")
+            icon.className = "material-icons left"
+            icon.innerHTML = "description"
+            content.appendChild(icon)
             li.appendChild(content)
             table.appendChild(li)
 
@@ -69,9 +98,9 @@
                 const li = document.createElement("li")
                 const projectLink = document.createElement("a")
                 projectLink.href = "#" + index
-                    //projectLink.onclick = update
                 projectLink.innerHTML = project.name
                 projectLink.id = index
+                projectLink.className = "waves-effect"
 
                 li.appendChild(projectLink)
                 table.appendChild(li)
@@ -89,53 +118,66 @@
             content = document.createElement("a")
             content.innerHTML = "Devices"
             content.className = "subheader"
+            icon = document.createElement("i")
+            icon.className = "material-icons left"
+            icon.innerHTML = "devices"
+            content.appendChild(icon)
             li.appendChild(content)
             table.appendChild(li)
 
-            //add Devices of selected Project
-            //todo fix dropdown only on first
 
+            //add Devices of selected Project
             var selectedProjectID = getAnchor()
             project = JSON.parse(projects[selectedProjectID])
+            access = JSON.parse(accesses[selectedProjectID])
             document.getElementById("project-name").innerHTML = project.name
 
             for (let index = 0; index < project.devices.length; index++) {
                 const device = project.devices[index]
 
+                //wrapper
                 const li = document.createElement("li")
-
                 const ul = document.createElement("ul")
                 ul.className = "collapsible collapsible-accordion"
-
                 const li2 = document.createElement("li")
-
                 const deviceLink = document.createElement("a")
-                deviceLink.innerHTML = device.name
-                deviceLink.className = "collapsible-header"
 
+                //device name
+                deviceLink.innerHTML = device.name
+
+                //dropdown
+                deviceLink.className = "collapsible-header waves-effect"
                 const icon = document.createElement("i")
                 icon.className = "material-icons right"
                 icon.innerHTML = "arrow_drop_down"
                 deviceLink.appendChild(icon)
-
                 li2.appendChild(deviceLink)
-
                 const div = document.createElement("div")
                 div.className = "collapsible-body"
-
                 const dropdownUl = document.createElement("ul")
 
-                const row = document.createElement("li")
-                const param = document.createElement("a")
+                //board type
+                row = document.createElement("li")
+                param = document.createElement("a")
                 param.innerHTML = device.boardType
                 row.appendChild(param)
                 dropdownUl.appendChild(row)
 
-                const row2 = document.createElement("li")
-                const param2 = document.createElement("a")
-                param2.innerHTML = "Online" //TODO: check status
-                row2.appendChild(param2)
-                dropdownUl.appendChild(row2)
+                //board state
+                row = document.createElement("li")
+                param = document.createElement("a")
+                param.innerHTML = "Offline" //checkHardwareConnection(url = access.url, port = access.port, token = device.token)
+                row.appendChild(param)
+                dropdownUl.appendChild(row)
+
+                //add Token
+                row = document.createElement("li")
+                var param = document.createElement("a")
+                    //param.addEventListener("click", remote.getGlobal("createAddDeviceTokenWindow")(1))
+                param.innerHTML = "Add Token"
+                    //param.href = "#"
+                row.appendChild(param)
+                dropdownUl.appendChild(row)
 
 
                 div.appendChild(dropdownUl)
@@ -146,12 +188,41 @@
             }
         }
 
+        function updateWidgets() {
+            widgets = require("./widgets.js")
+            var dom = document.getElementById("widgets")
+            var selectedProjectID = getAnchor()
+            project = JSON.parse(projects[selectedProjectID])
+            for (let index = 0; index < project.widgets.length; index++) {
+                widget = project.widgets[index]
+                dom.appendChild(widgets(widget))
+            }
+        }
+
 
         function getAnchor() {
             var currentUrl = document.URL,
                 urlParts = currentUrl.split('#')
 
             return (urlParts.length > 1) ? urlParts[1] : 0
+        }
+
+        function checkHardwareConnection(url = "blynk-cloud.com", port = "9443", token) {
+            process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
+            https.get("https://" + url + ":" + port + "/" + token + "/isHardwareConnected", (resp) => {
+                let data = ""
+
+                resp.on("data", (chunk) => {
+                    data += chunk
+                })
+                resp.on("end", () => {
+                    return data
+                })
+            }).on("error", (err) => {
+                console.log("Error: " + err.message)
+            })
+
+            process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 1;
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
