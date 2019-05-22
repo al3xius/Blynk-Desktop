@@ -59,11 +59,13 @@
 
         var projects = store.get("projects") || [] //load projects
         var accesses = store.get("accesses") || []
+        var devices = store.get("devices") || []
 
         update()
 
         function update() {
             updateSideBar()
+            updateHardware()
             updateWidgets()
         }
 
@@ -94,7 +96,6 @@
 
             for (let index = 0; index < projects.length; index++) {
                 project = projects[index]
-                project = JSON.parse(project)
                 const li = document.createElement("li")
                 const projectLink = document.createElement("a")
                 projectLink.href = "#" + index
@@ -128,12 +129,21 @@
 
             //add Devices of selected Project
             var selectedProjectID = getAnchor()
-            project = JSON.parse(projects[selectedProjectID])
-            access = JSON.parse(accesses[selectedProjectID])
+            project = projects[selectedProjectID]
+            access = accesses[selectedProjectID]
             document.getElementById("project-name").innerHTML = project.name
 
             for (let index = 0; index < project.devices.length; index++) {
                 const device = project.devices[index]
+                var deviceState
+                for (let index = 0; index < devices.length; index++) {
+                    id = devices[index].id
+                    if (id == device.id) {
+                        var token = devices[index].token
+                        var deviceState = devices[index].state
+                        break
+                    }
+                }
 
                 //wrapper
                 const li = document.createElement("li")
@@ -166,14 +176,19 @@
                 //board state
                 row = document.createElement("li")
                 param = document.createElement("a")
-                param.innerHTML = "Offline" //checkHardwareConnection(url = access.url, port = access.port, token = device.token)
+                param.id = "state" + device.id
+                param.innerHTML = deviceState
+
+
                 row.appendChild(param)
                 dropdownUl.appendChild(row)
 
                 //add Token
                 row = document.createElement("li")
                 var param = document.createElement("a")
-                    //param.addEventListener("click", remote.getGlobal("createAddDeviceTokenWindow")(1))
+                param.addEventListener("click", function() {
+                    remote.getGlobal("createAddDeviceTokenWindow")(index)
+                })
                 param.innerHTML = "Add Token"
                     //param.href = "#"
                 row.appendChild(param)
@@ -192,10 +207,40 @@
             widgets = require("./widgets.js")
             var dom = document.getElementById("widgets")
             var selectedProjectID = getAnchor()
-            project = JSON.parse(projects[selectedProjectID])
+            project = projects[selectedProjectID]
+            access = accesses[selectedProjectID]
+
+
             for (let index = 0; index < project.widgets.length; index++) {
                 widget = project.widgets[index]
-                dom.appendChild(widgets(widget))
+                dom.appendChild(widgets(widget, access))
+            }
+        }
+
+        function updateHardware() {
+            devices = store.get("devices") || []
+            for (let i = 0; i < devices.length; i++) {
+                process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
+                https.get("https://" + accesses[0].url + ":" + accesses[0].port + "/" + devices[i].token + "/isHardwareConnected", (resp) => {
+                    let data = ""
+
+                    resp.on("data", (chunk) => {
+                        data += chunk
+                    })
+                    resp.on("end", () => {
+                        if (data == "true") {
+                            var val = "Online"
+                        } else {
+                            var val = "Offline"
+                        }
+                        devices[i].state = val
+                        store.set("devices", devices)
+                    })
+                }).on("error", (err) => {
+                    console.log("Error: " + err.message)
+                })
+
+                process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 1;
             }
         }
 
@@ -207,22 +252,10 @@
             return (urlParts.length > 1) ? urlParts[1] : 0
         }
 
-        function checkHardwareConnection(url = "blynk-cloud.com", port = "9443", token) {
-            process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
-            https.get("https://" + url + ":" + port + "/" + token + "/isHardwareConnected", (resp) => {
-                let data = ""
+        function checkHardwareConnection(url = "blynk-cloud.com", port = "9443", device, index) {
 
-                resp.on("data", (chunk) => {
-                    data += chunk
-                })
-                resp.on("end", () => {
-                    return data
-                })
-            }).on("error", (err) => {
-                console.log("Error: " + err.message)
-            })
 
-            process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 1;
+
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, ipcRenderer } = require('electron')
 const Store = require("electron-store")
 const path = require('path')
 const url = require('url')
@@ -14,6 +14,7 @@ let win
 let addProjectWindow
 let addDeviceTokenWindow
 const store = new Store();
+var lastId = 0
 
 function createWindow() {
     // Create the browser window.
@@ -122,6 +123,9 @@ function createAddDeviceTokenWindow(id) {
         slashes: true
     }))
 
+    lastId = id
+
+
     // Handle garbage collection
     addDeviceTokenWindow.on('close', function() {
         addProjectWindow = null;
@@ -141,13 +145,12 @@ ipcMain.on('project:add', function(e, access) {
 })
 
 // Catch device:addToken
-ipcMain.on('device:addToken', function(e, token) {
+ipcMain.on('device:addToken', function(e, token, id) {
     addDeviceTokenWindow.close();
-    /*accesses = store.get("accesses") || []
-    accesses = [...accesses, access]
-    store.set("accesses", accesses)
-    accesses = null
-    updateProjects()*/
+    devices = store.get("devices") || []
+    devices[lastId].token = token
+    store.set("devices", devices)
+    devices = null
 })
 
 
@@ -159,7 +162,7 @@ function updateProjects() {
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
 
     for (let index = 0; index < accesses.length; index++) {
-        const access = JSON.parse(accesses[index])
+        const access = accesses[index]
         https.get("https://" + access.url + ":" + access.port + "/" + access.token + "/project", (resp) => {
             let data = ""
 
@@ -168,7 +171,7 @@ function updateProjects() {
             })
             resp.on("end", () => {
                 projects = store.get("projects") || []
-                projects = [...projects, data]
+                projects = [...projects, JSON.parse(data)]
                 store.set("projects", projects)
             })
         }).on("error", (err) => {

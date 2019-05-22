@@ -1,5 +1,10 @@
 "use strict"
 
+const Store = require("electron-store")
+const store = new Store();
+
+var devices = store.get("devices") || []
+
 class Widget {
     constructor(config) {}
     create(config) {
@@ -13,8 +18,8 @@ class Widget {
 }
 
 class TABS {
-    constructor(config) {
-        var tabs = config.tabs
+    constructor(properties) {
+        var tabs = properties.tabs
         var dom = document.createElement("div")
         dom.className = "col s12"
 
@@ -39,11 +44,127 @@ class TABS {
 }
 
 class STYLED_BUTTON {
-    constructor(config) {
+    constructor(properties, access) {
         var dom = document.createElement("a")
         dom.className = "waves-effect waves-light btn"
-        dom.id = "tab" + config.tabId
-        dom.innerHTML = config.offButtonState.text || "OFF"
+        dom.id = "tab" + properties.tabId
+        var text = (properties.label || "") + " "
+        var offtext = properties.offButtonState.text || "OFF"
+        dom.innerHTML = text + offtext
+
+        for (let index = 0; index < devices.length; index++) {
+            if (devices[index].id == properties.deviceId) {
+                var token = devices[index].token
+                break
+            }
+        }
+
+        switch (properties.pinType) {
+            case "DIGITAL":
+                var pin = "D" + properties.pin
+
+            case "VIRTUAL":
+                var pin = "V" + properties.pin
+        }
+
+        dom.onclick = function() {
+            process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
+            var currentValue = 0
+
+            //get current value
+            https.get("https://" + access.url + ":" + access.port + "/" + token + "/get/" + pin, (resp) => {
+                let data = ""
+
+                resp.on("data", (chunk) => {
+                    data += chunk
+                })
+                resp.on("end", () => {
+                    currentValue = JSON.parse(data)[0]
+
+                    if (currentValue == properties.max && !properties.pushMode) {
+                        var value = properties.min
+                    } else {
+                        var value = properties.max
+                    }
+
+                    //send new Value
+                    https.get("https://" + access.url + ":" + access.port + "/" + token + "/update/" + pin + "?value=" + value, (resp) => {
+                        let data = ""
+
+                        resp.on("data", (chunk) => {
+                            data += chunk
+                        })
+                        resp.on("end", () => {})
+                    }).on("error", (err) => {
+                        console.log("Error: " + err.message)
+                    })
+                })
+            }).on("error", (err) => {
+                console.log("Error: " + err.message)
+            })
+        }
+        return dom
+    }
+}
+
+class BUTTON {
+    constructor(properties, access) {
+        var dom = document.createElement("a")
+        dom.className = "waves-effect waves-light btn"
+        dom.id = "tab" + properties.tabId
+        dom.innerHTML = "OFF"
+
+        for (let index = 0; index < devices.length; index++) {
+            if (devices[index].id == properties.deviceId) {
+                var token = devices[index].token
+                break
+            }
+        }
+
+        switch (properties.pinType) {
+            case "DIGITAL":
+                var pin = "D" + properties.pin
+
+            case "VIRTUAL":
+                var pin = "V" + properties.pin
+        }
+
+        dom.onclick = function() {
+            process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
+            var currentValue = 0
+
+            //get current value
+            https.get("https://" + access.url + ":" + access.port + "/" + token + "/get/" + pin, (resp) => {
+                let data = ""
+
+                resp.on("data", (chunk) => {
+                    data += chunk
+                })
+                resp.on("end", () => {
+                    currentValue = JSON.parse(data)[0]
+
+                    if (currentValue == properties.max && !properties.pushMode) {
+                        var value = properties.min
+                    } else {
+                        var value = properties.max
+                    }
+
+                    //send new Value
+                    https.get("https://" + access.url + ":" + access.port + "/" + token + "/update/" + pin + "?value=" + value, (resp) => {
+                        let data = ""
+
+                        resp.on("data", (chunk) => {
+                            data += chunk
+                        })
+                        resp.on("end", () => {})
+                    }).on("error", (err) => {
+                        console.log("Error: " + err.message)
+                    })
+                })
+            }).on("error", (err) => {
+                console.log("Error: " + err.message)
+            })
+        }
         return dom
     }
 }
@@ -55,15 +176,15 @@ function getAnchor() {
     return (urlParts.length > 1) ? urlParts[1] : 0
 }
 
-function create(config) {
-    var type = config.type
+function create(properties, access) {
+    var type = properties.type
 
-    if (type == "TABS") {
-        console.log(config)
-        var widget = new TABS(config)
-        console.log(config)
+    if (type == "testTABS") {
+        var widget = new TABS(properties)
     } else if (type == "STYLED_BUTTON") {
-        var widget = new STYLED_BUTTON(config)
+        var widget = new STYLED_BUTTON(properties, access)
+    } else if (type == "BUTTON") {
+        var widget = new BUTTON(properties, access)
     } else {
         var widget = document.createElement("meta")
     }
