@@ -13,26 +13,8 @@
 </head>
 
 <body>
-    <nav>
-        <div class="nav-wrapper">
-            <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons center">menu</i></a>
-            <a id="project-name" class="brand-logo center">Select Project</a>
-        </div>
-    </nav>
-
-    <ul id="slide-out" class="sidenav">
-    </ul>
-
-
-    <div class="row" id="widgets"></div>
-
     <!--JavaScript at end of body for optimized loading-->
     <script>
-        /* TODO: on Project change dropdown
-         * 
-         */
-
-
         //Project Nav Bar
         const {
             remote
@@ -64,6 +46,14 @@
         update()
 
         function update() {
+            var body = document.querySelector("body")
+            body.innerHTML = '<div id="nav-bar" class="nav-bar">' +
+                '</div>' +
+                '<ul id="slide-out" class="sidenav">' +
+                '</ul>' +
+                '<div class="row" id="widgets"></div>'
+
+            generateNavbar()
             updateSideBar()
             updateHardware()
             updateWidgets()
@@ -74,9 +64,68 @@
             update()
         })
 
+        function generateNavbar() {
+            var selectedProjectID = getAnchor() || 0
+            var navDiv = document.getElementById("nav-bar")
+            var tabId = 0
+            for (var i = 0; i < projects[selectedProjectID].widgets.length; i++) {
+                if (projects[selectedProjectID].widgets[i].type == "TABS") {
+                    var tabsExists = true
+                    tabId = i
+                    break
+                } else {
+                    var tabsExists = false
+                }
+            }
+
+            if (tabsExists) {
+                var tabs = projects[selectedProjectID].widgets[tabId].tabs
+
+                var nav = document.createElement("nav")
+                nav.className = "nav-extended"
+
+                var nav_warpper = document.createElement("div")
+                nav_warpper.className = "nav-wrapper"
+                nav_warpper.innerHTML = '<a id="project-name" class="brand-logo">Select Project</a>' +
+                    '<a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>'
+                nav.appendChild(nav_warpper)
+
+                var nav_content = document.createElement("div")
+                nav_content.className = "nav-content"
+                var tabUl = document.createElement("ul")
+                tabUl.className = "tabs tabs-transparent"
+
+                for (let index = 0; index < tabs.length; index++) {
+                    const tab = tabs[index]
+
+                    var li = document.createElement("li")
+                    li.className = "tab"
+                    var text = document.createElement("a")
+                    text.href = "#tab" + index
+                    text.innerHTML = tab.label || "Tab " + (index + 1)
+                    li.appendChild(text)
+                    tabUl.appendChild(li)
+                }
+                nav_content.appendChild(tabUl)
+                nav.appendChild(nav_content)
+
+                navDiv.appendChild(nav)
+
+            } else {
+                var navBar =
+                    '<nav>' +
+                    '<div class="nav-wrapper">' +
+                    '<a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons center">menu</i></a>' +
+                    '<a id="project-name" class="brand-logo center">Select Project</a>' +
+                    '</div>' +
+                    '</nav>'
+                navDiv.innerHTML = navBar
+            }
+        }
+
         function updateSideBar() {
             //fill sidebar
-            const table = document.querySelector('ul')
+            const table = document.getElementById('slide-out')
             projects = store.get("projects") || [] //load projects
             accesses = store.get("accesses") || []
 
@@ -190,7 +239,6 @@
                     remote.getGlobal("createAddDeviceTokenWindow")(index)
                 })
                 param.innerHTML = "Add Token"
-                    //param.href = "#"
                 row.appendChild(param)
                 dropdownUl.appendChild(row)
 
@@ -250,12 +298,6 @@
                 urlParts = currentUrl.split('#')
 
             return (urlParts.length > 1) ? urlParts[1] : 0
-        }
-
-        function checkHardwareConnection(url = "blynk-cloud.com", port = "9443", device, index) {
-
-
-
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
