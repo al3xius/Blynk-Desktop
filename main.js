@@ -226,7 +226,7 @@ const mainMenuTemplate = [
     }
 ];
 
-
+/*
 if (process.platform == 'darwin') {
     mainMenuTemplate.unshift({
         label: "Blynk-Desktop",
@@ -236,7 +236,7 @@ if (process.platform == 'darwin') {
             { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); } }
         ]
     });
-}
+}*/
 
 // Add developer tools option if in dev
 if (process.env.NODE_ENV !== 'production') {
