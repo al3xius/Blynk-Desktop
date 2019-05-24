@@ -51,7 +51,18 @@
                 '</div>' +
                 '<ul id="slide-out" class="sidenav">' +
                 '</ul>' +
-                '<div class="row" id="widgets"></div>'
+                '<div class="row" id="tab0"></div>' +
+                '<div class="row" id="tab1"></div>' +
+                '<div class="row" id="tab2"></div>' +
+                '<div class="row" id="tab3"></div>' +
+                '<div class="row" id="tab4"></div>' +
+                '<div class="row" id="tab5"></div>' +
+                '<div class="row" id="tab6"></div>' +
+                '<div class="row" id="tab7"></div>' +
+                '<div class="row" id="tab8"></div>' +
+                '<div class="row" id="tab9"></div>'
+
+
 
             generateNavbar()
             updateSideBar()
@@ -65,7 +76,7 @@
         })
 
         function generateNavbar() {
-            var selectedProjectID = getAnchor() || 0
+            var selectedProjectID = getAllUrlParams().project || 0
             var navDiv = document.getElementById("nav-bar")
             var tabId = 0
             for (var i = 0; i < projects[selectedProjectID].widgets.length; i++) {
@@ -147,7 +158,7 @@
                 project = projects[index]
                 const li = document.createElement("li")
                 const projectLink = document.createElement("a")
-                projectLink.href = "#" + index
+                projectLink.href = "?project=" + index
                 projectLink.innerHTML = project.name
                 projectLink.id = index
                 projectLink.className = "waves-effect"
@@ -177,7 +188,7 @@
 
 
             //add Devices of selected Project
-            var selectedProjectID = getAnchor()
+            var selectedProjectID = getAllUrlParams().project || 0
             project = projects[selectedProjectID]
             access = accesses[selectedProjectID]
             document.getElementById("project-name").innerHTML = project.name
@@ -253,15 +264,17 @@
 
         function updateWidgets() {
             widgets = require("./widgets.js")
-            var dom = document.getElementById("widgets")
-            var selectedProjectID = getAnchor()
+            var selectedProjectID = getAllUrlParams().project || 0
             project = projects[selectedProjectID]
             access = accesses[selectedProjectID]
 
 
             for (let index = 0; index < project.widgets.length; index++) {
                 widget = project.widgets[index]
-                dom.appendChild(widgets(widget, access))
+                if (widget.tabId >= 0) {
+                    var dom = document.getElementById("tab" + widget.tabId)
+                    dom.appendChild(widgets(widget, access))
+                }
             }
         }
 
@@ -298,6 +311,71 @@
                 urlParts = currentUrl.split('#')
 
             return (urlParts.length > 1) ? urlParts[1] : 0
+        }
+
+        function getAllUrlParams(url) {
+
+            // get query string from url (optional) or window
+            var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
+
+            // we'll store the parameters here
+            var obj = {};
+
+            // if query string exists
+            if (queryString) {
+
+                // stuff after # is not part of query string, so get rid of it
+                queryString = queryString.split('#')[0];
+
+                // split our query string into its component parts
+                var arr = queryString.split('&');
+
+                for (var i = 0; i < arr.length; i++) {
+                    // separate the keys and the values
+                    var a = arr[i].split('=');
+
+                    // set parameter name and value (use 'true' if empty)
+                    var paramName = a[0];
+                    var paramValue = typeof(a[1]) === 'undefined' ? true : a[1];
+
+                    // (optional) keep case consistent
+                    paramName = paramName.toLowerCase();
+                    if (typeof paramValue === 'string') paramValue = paramValue.toLowerCase();
+
+                    // if the paramName ends with square brackets, e.g. colors[] or colors[2]
+                    if (paramName.match(/\[(\d+)?\]$/)) {
+
+                        // create key if it doesn't exist
+                        var key = paramName.replace(/\[(\d+)?\]/, '');
+                        if (!obj[key]) obj[key] = [];
+
+                        // if it's an indexed array e.g. colors[2]
+                        if (paramName.match(/\[\d+\]$/)) {
+                            // get the index value and add the entry at the appropriate position
+                            var index = /\[(\d+)\]/.exec(paramName)[1];
+                            obj[key][index] = paramValue;
+                        } else {
+                            // otherwise add the value to the end of the array
+                            obj[key].push(paramValue);
+                        }
+                    } else {
+                        // we're dealing with a string
+                        if (!obj[paramName]) {
+                            // if it doesn't exist, create property
+                            obj[paramName] = paramValue;
+                        } else if (obj[paramName] && typeof obj[paramName] === 'string') {
+                            // if property does exist and it's a string, convert it to an array
+                            obj[paramName] = [obj[paramName]];
+                            obj[paramName].push(paramValue);
+                        } else {
+                            // otherwise add the property
+                            obj[paramName].push(paramValue);
+                        }
+                    }
+                }
+            }
+
+            return obj;
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
