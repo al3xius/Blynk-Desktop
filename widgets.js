@@ -43,9 +43,10 @@ class STYLED_BUTTON {
         switch (properties.pinType) {
             case "DIGITAL":
                 var pin = "D" + properties.pin
-
+                break
             case "VIRTUAL":
                 var pin = "V" + properties.pin
+                break
         }
 
         button.onclick = function() {
@@ -68,7 +69,10 @@ class STYLED_BUTTON {
                         var value = properties.max
                     }
 
-                    //send new Value
+                    console.log(properties.pinType)
+                    console.log(properties.pin)
+                    console.log("https://" + access.url + ":" + access.port + "/" + token + "/update/" + pin + "?value=" + value)
+                        //send new Value
                     https.get("https://" + access.url + ":" + access.port + "/" + token + "/update/" + pin + "?value=" + value, (resp) => {
                         let data = ""
 
@@ -113,9 +117,10 @@ class BUTTON {
         switch (properties.pinType) {
             case "DIGITAL":
                 var pin = "D" + properties.pin
-
+                break
             case "VIRTUAL":
                 var pin = "V" + properties.pin
+                break
         }
 
         button.onclick = function() {
@@ -188,9 +193,10 @@ class SLIDER {
         switch (properties.pinType) {
             case "DIGITAL":
                 var pin = "D" + properties.pin
-
+                break
             case "VIRTUAL":
                 var pin = "V" + properties.pin
+                break
         }
 
         process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
@@ -214,8 +220,7 @@ class SLIDER {
 
         slider.onclick = function() {
             var value = slider.value
-
-            //send new Value
+                //send new Value
             https.get("https://" + access.url + ":" + access.port + "/" + token + "/update/" + pin + "?value=" + value, (resp) => {
                 let data = ""
 

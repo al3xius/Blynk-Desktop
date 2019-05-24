@@ -204,12 +204,6 @@ const mainMenuTemplate = [
                 }
             },
             {
-                label: 'Clear Items',
-                click() {
-                    mainWindow.webContents.send('item:clear');
-                }
-            },
-            {
                 label: 'Quit',
                 accelerator: process.platform == 'darwin' ? 'Command+Q' : 'Ctrl+Q',
                 click() {
