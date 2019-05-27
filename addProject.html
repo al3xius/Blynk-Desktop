@@ -41,11 +41,14 @@
             e.preventDefault()
 
             const token = document.querySelector('#token').value
+
+
             if(document.querySelector('#url').value.length > 0){
-                const url = document.querySelector('#url').value
+                var url = document.querySelector('#url').value
             } else{
-                const url = "blynk-cloud.com"
+                var url = "blynk-cloud.com"
             }
+
             const port = document.querySelector('#port').value
             var tokenStr = new String(token)
 
@@ -55,9 +58,10 @@
                 port: port
             }
 
+
             //check token
             if (tokenStr.length == 32) {
-                ipcRenderer.send('project:add', JSON.stringify(access))
+                ipcRenderer.send('project:add', access)
             } else {
                 var err = alert("Enter valid Token! Make sure it is 32 characters long.")
             }
