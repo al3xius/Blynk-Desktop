@@ -167,7 +167,18 @@ function updateProjects() {
 
     for (let index = 0; index < accesses.length; index++) {
         const access = accesses[index]
-        https.get("https://" + access.url + ":" + access.port + "/" + access.token + "/project", (resp) => {
+        console.log(access)
+        console.log(access.port)
+        console.log(access.url)
+        if(access.port){
+            var port = ":" + access.port
+        }else{
+            var port = ""
+        }
+
+        console.log("https://" + access.url + port + "/" + access.token + "/project")
+
+        https.get("https://" + access.url + port + "/" + access.token + "/project", (resp) => {
             let data = ""
 
             resp.on("data", (chunk) => {

@@ -15,7 +15,7 @@
                 <label>Server URL</label>
                 <input type="url" id="url" defalutValue="blynk-cloud.com" placeholder="blynk-cloud.com">
                 <label>Port</label>
-                <input type="text" id="port" defaultValue="9443" placeholder="9443">
+                <input type="text" id="port">
             </div>
             <button class="waves-effect waves-light btn" id="submit" type="submit">Add Token</button>
             <button class="waves-effect waves-light btn" id="close" type="submit">Close</button>
@@ -41,7 +41,11 @@
             e.preventDefault()
 
             const token = document.querySelector('#token').value
-            const url = document.querySelector('#url').value
+            if(document.querySelector('#url').value.length > 0){
+                const url = document.querySelector('#url').value
+            } else{
+                const url = "blynk-cloud.com"
+            }
             const port = document.querySelector('#port').value
             var tokenStr = new String(token)
 
@@ -53,7 +57,6 @@
 
             //check token
             if (tokenStr.length == 32) {
-                console.log(ipcRenderer)
                 ipcRenderer.send('project:add', JSON.stringify(access))
             } else {
                 var err = alert("Enter valid Token! Make sure it is 32 characters long.")
