@@ -155,7 +155,7 @@ ipcMain.on('device:addToken', function(e, token, id) {
 
 
 function updateProjects() {
-    accesses = store.get("accesses")
+    accesses = store.get("accesses") || []
     projects = []
     store.set("projects", projects)
 
