@@ -155,9 +155,13 @@ ipcMain.on('device:addToken', function(e, token, id) {
 
 
 function updateProjects() {
-    accesses = store.get("accesses") || []
+    accesses = store.get("accesses") ||[]
     projects = []
     store.set("projects", projects)
+
+    if (accesses.length == 0){
+        createAddProjectWindow();
+    }
 
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //TODO: make more secure
 
@@ -182,11 +186,25 @@ function updateProjects() {
 }
 
 
-
+isMac = process.platform === 'darwin'
 
 // Create menu template
 const mainMenuTemplate = [
     // Each object is a dropdown
+    ...(process.platform === 'darwin' ? [{
+        label: app.getName(),
+        submenu: [
+          { role: 'about' },
+          { type: 'separator' },
+          { role: 'services' },
+          { type: 'separator' },
+          { role: 'hide' },
+          { role: 'hideothers' },
+          { role: 'unhide' },
+          { type: 'separator' },
+          { role: 'quit' }
+        ]
+      }] : []),
     {
         label: 'File',
         submenu: [{
@@ -203,13 +221,7 @@ const mainMenuTemplate = [
                     createAddDeviceTokenWindow();
                 }
             },
-            {
-                label: 'Quit',
-                accelerator: process.platform == 'darwin' ? 'Command+Q' : 'Ctrl+Q',
-                click() {
-                    app.quit();
-                }
-            }
+            isMac ? { role: 'close' } : { role: 'quit' }
         ]
     },
     {
@@ -226,7 +238,7 @@ const mainMenuTemplate = [
     }
 ];
 
-if (process.platform == 'darwin') {
+/*if (process.platform == 'darwin') {
     mainMenuTemplate.unshift({
         label: "Blynk-Desktop",
         submenu: [
@@ -235,7 +247,7 @@ if (process.platform == 'darwin') {
             { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); } }
         ]
     });
-}
+}*/
 
 // Add developer tools option if in dev
 if (process.env.NODE_ENV !== 'production') {
