@@ -88,6 +88,7 @@ function createAddProjectWindow() {
         modal: true,
         center: true,
         resizable: false,
+        frame: false,
         webPreferences: {
             nodeIntegration: true
         }
@@ -113,6 +114,7 @@ function createAddDeviceTokenWindow(id) {
         modal: true,
         center: true,
         resizable: false,
+        frame: false,
         webPreferences: {
             nodeIntegration: true
         }
@@ -167,16 +169,11 @@ function updateProjects() {
 
     for (let index = 0; index < accesses.length; index++) {
         const access = accesses[index]
-        console.log(access)
-        console.log(access.port)
-        console.log(access.url)
         if(access.port){
             var port = ":" + access.port
         }else{
             var port = ""
         }
-
-        console.log("https://" + access.url + port + "/" + access.token + "/project")
 
         https.get("https://" + access.url + port + "/" + access.token + "/project", (resp) => {
             let data = ""
@@ -249,19 +246,9 @@ const mainMenuTemplate = [
     }
 ];
 
-/*if (process.platform == 'darwin') {
-    mainMenuTemplate.unshift({
-        label: "Blynk-Desktop",
-        submenu: [
-            { label: "About Application", selector: "orderFrontStandardAboutPanel:" },
-            { type: "separator" },
-            { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); } }
-        ]
-    });
-}*/
 
 // Add developer tools option if in dev
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV != 'production') {
     mainMenuTemplate.push({
         label: 'Developer Tools',
         submenu: [{
