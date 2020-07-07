@@ -23,7 +23,7 @@
     },
     "homepage": "https://github.com/al3xius/Blynk-Desktop#readme",
     "devDependencies": {
-        "electron": "^5.0.2",
+        "electron": "^7.2.4",
         "electron-winstaller": "^3.0.4"
     },
     "dependencies": {
